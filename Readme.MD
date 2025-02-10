@@ -1,33 +1,43 @@
 # Deployment Steps for Python Microservice on Kubernetes
 
 ## Overview
-This document outlines the steps followed to deploy a Python Flask microservice on a Kubernetes cluster using Azure, Docker, and GitHub Actions. The process includes containerization, infrastructure provisioning, service exposure, and CI/CD automation.
+This Readme file outlines the steps I followed to deploy a Python service on a Kubernetes cluster using Azure, Docker, and GitHub Actions. The process includes containerization, infrastructure provisioning, service exposure, and CI/CD automation.
 
 ---
 
 ## **Steps Taken**
 
-### **1. Clone the Repository**
+### **1. Cloned the Repository**
 Clone the microservice repository from GitHub:
 ```bash
 git clone https://github.com/sameh-Tawfiq/Microservices
 cd Microservices
 ```
 
-### **2. Dockerize the Application**
-Create a `Dockerfile` to containerize the Flask application:
+### **2. Dockerized the Application**
+Created a `Dockerfile` to containerize the application:
 
 ```Dockerfile
-FROM python:3.9-alpine
+# base image as light as possible
+FROM python:3.9-slim
 
+# environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Set the working directory
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
+# Copy application files
 COPY . .
 
-CMD ["python", "app.py"]
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose the port Flask runs on (default: 5000)
+EXPOSE 5000
+
+# Run the application
+CMD ["python", "run.py"]
 ```
 
 Build and run the Docker image locally:
@@ -91,7 +101,7 @@ spec:
         app: pwc-microservice
     spec:
       containers:
-      - name: flask-container
+      - name: pwc-container
         image: zzlolo123/pwc-microservice:latest
         ports:
         - containerPort: 5000
@@ -137,7 +147,7 @@ on:
 
 jobs:
   build-deploy:
-    runs-on: self-hosted  # Specify local runner
+    runs-on: self-hosted 
 
     env:
       IMAGE_NAME: "zzlolo123/pwc-microservice"
@@ -161,7 +171,7 @@ jobs:
       with:
         image-ref: ${{ env.IMAGE_NAME }}:latest
         format: "table"
-        exit-code: "0"
+        exit-code: "1"
         severity: "HIGH,CRITICAL"
 
     - name: Push Docker Image
